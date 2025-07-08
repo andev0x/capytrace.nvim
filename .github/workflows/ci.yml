@@ -58,17 +58,10 @@ jobs:
         with:
           neovim: true
           version: ${{ matrix.neovim-version }}
-      - name: Install stylua
+      - name: Lint with stylua
         uses: JohnnyMorganz/stylua-action@v4
         with:
           version: latest
-          token: ${{ github.token }}
-      - name: Lint Lua
-        run: |
-          set -e
-          files=$(find lua -name "*.lua" -print; find plugin -name "*.lua" -print)
-          if [ -n "$files" ]; then
-            echo "$files" | xargs stylua
-          else
-            echo "No Lua files found to lint."
-          fi || true 
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --check lua plugin
+       
