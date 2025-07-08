@@ -28,29 +28,12 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      - name: Fix Go module path for CI
-        id: gomodfix
-        run: |
-          if [ -f go.mod ]; then
-            MODPATH=$(grep '^module ' go.mod | awk '{print $2}')
-            if [[ "$PWD" != *"$MODPATH" ]]; then
-              echo "Moving sources to match module path for Go"
-              mkdir -p /tmp/gopath/src/$MODPATH
-              cp -r . /tmp/gopath/src/$MODPATH
-              echo "workdir=/tmp/gopath/src/$MODPATH" >> $GITHUB_ENV
-            else
-              echo "workdir=$PWD" >> $GITHUB_ENV
-            fi
-          fi
       - name: Build
         run: make build
-        working-directory: ${{ env.workdir }}
       - name: Test
         run: make test
-        working-directory: ${{ env.workdir }}
       - name: Format
         run: make fmt
-        working-directory: ${{ env.workdir }}
       - name: Upload Go binary
         uses: actions/upload-artifact@v4
         with:
