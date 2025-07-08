@@ -113,10 +113,13 @@ require("debugstory").setup({
 📊 **Total Lines:** 120
 
 ### 10:07:15 - Terminal Command
-💻 ```bash
+```
+
+```bash
 git log --oneline -10
 ```
 
+```markdown
 ### 10:10:30 - Note
 📝 Found potential issue in authentication logic
 
@@ -131,7 +134,6 @@ git log --oneline -10
 - **Annotations:** 3
 - **Cursor Movements:** 2
 ```
-
 ---
 
 ## 🤝 Contributing
