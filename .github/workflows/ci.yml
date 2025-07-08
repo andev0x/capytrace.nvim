@@ -81,7 +81,7 @@ jobs:
           version: latest
           token: ${{ github.token }}
       - name: Lint Lua
-        run: stylua lua/ plugin/
+        run: stylua lua/**/*.lua plugin/**/*.lua
       # Uncomment if you add busted tests
       # - name: Install busted
       #   run: luarocks install busted

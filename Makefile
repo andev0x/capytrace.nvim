@@ -33,7 +33,9 @@ go-mod-init:
 
 # Format Go code
 fmt:
-	go fmt ./recorder/... ./exporter/... ./main.go
+	go fmt ./recorder/*.go
+	go fmt ./exporter/*.go
+	go fmt ./main.go
 
 # Check for Go dependencies
 check-deps:
