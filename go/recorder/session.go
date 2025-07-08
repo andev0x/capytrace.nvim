@@ -61,7 +61,7 @@ func NewSession(id, projectPath, savePath, outputFormat string) *Session {
 
 func (s *Session) Start() error {
 	activeSessions[s.ID] = s
-	
+
 	// Record initial event
 	s.Events = append(s.Events, Event{
 		Type:      "session_start",
