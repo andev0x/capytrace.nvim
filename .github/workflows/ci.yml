@@ -82,9 +82,4 @@ jobs:
           token: ${{ github.token }}
       - name: Lint Lua
         run: |
-          find lua plugin -name "*.lua" -print0 | xargs -0 stylua
-      # Uncomment if you add busted tests
-      # - name: Install busted
-      #   run: luarocks install busted
-      # - name: Run Lua tests
-      #   run: busted 
+          find lua plugin -name "*.lua" -print0 | xargs -0 stylua 
