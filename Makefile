@@ -9,8 +9,8 @@ all: build
 
 build:
 	@echo "Building $(PLUGIN_NAME)..."
-	@mkdir -p bin
-	go build -o $(GO_BINARY) $(GO_SOURCE)
+	@mkdir -p ./bin
+	go build -o ./bin/$(PLUGIN_NAME) $(GO_SOURCE)
 
 clean:
 	@echo "Cleaning build artifacts..."
