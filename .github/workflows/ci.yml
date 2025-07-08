@@ -28,17 +28,34 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
+      - name: Fix Go module path for CI
+        run: |
+          if [ -f go.mod ]; then
+            MODPATH=$(grep '^module ' go.mod | awk '{print $2}')
+            if [[ "$PWD" != *"$MODPATH" ]]; then
+              echo "Moving sources to match module path for Go"
+              mkdir -p /tmp/gopath/src/$MODPATH
+              cp -r . /tmp/gopath/src/$MODPATH
+              cd /tmp/gopath/src/$MODPATH
+              echo "::set-output name=workdir::/tmp/gopath/src/$MODPATH"
+            fi
+          fi
+        id: gomodfix
       - name: Build
         run: make build
+        working-directory: ${{ steps.gomodfix.outputs.workdir || '.' }}
       - name: Test
         run: make test
+        working-directory: ${{ steps.gomodfix.outputs.workdir || '.' }}
       - name: Format
         run: make fmt
+        working-directory: ${{ steps.gomodfix.outputs.workdir || '.' }}
       - name: Upload Go binary
         uses: actions/upload-artifact@v4
         with:
           name: debugstory-binary
           path: bin/debugstory
+        if: always()
 
   lua:
     name: Lua Lint & (Optional) Test
