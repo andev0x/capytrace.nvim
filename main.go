@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/debugstory/recorder"
-	"github.com/debugstory/exporter"
+	"github.com/andev0x/debugstory.nvim/exporter"
+	"github.com/andev0x/debugstory.nvim/recorder"
 )
 
 func main() {

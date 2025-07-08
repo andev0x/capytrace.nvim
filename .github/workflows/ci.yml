@@ -61,6 +61,7 @@ jobs:
         uses: JohnnyMorganz/stylua-action@v4
         with:
           version: latest
+          token: ${{ github.token }}
       - name: Lint Lua
         run: stylua lua/ plugin/
       # Uncomment if you add busted tests

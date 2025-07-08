@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/debugstory/recorder"
+	"github.com/andev0x/debugstory.nvim/recorder"
 )
 
 type MarkdownExporter struct{}
@@ -39,35 +39,35 @@ func (e *MarkdownExporter) generateMarkdown(session *recorder.Session) string {
 
 	for _, event := range session.Events {
 		timestamp := event.Timestamp.Format("15:04:05")
-		
+
 		switch event.Type {
 		case "session_start":
 			sb.WriteString(fmt.Sprintf("### %s - Session Started\n", timestamp))
 			sb.WriteString(fmt.Sprintf("🚀 %s\n\n", event.Data.Note))
-			
+
 		case "session_end":
 			sb.WriteString(fmt.Sprintf("### %s - Session Ended\n", timestamp))
 			sb.WriteString(fmt.Sprintf("🏁 %s\n\n", event.Data.Note))
-			
+
 		case "annotation":
 			sb.WriteString(fmt.Sprintf("### %s - Note\n", timestamp))
 			sb.WriteString(fmt.Sprintf("📝 %s\n\n", event.Data.Note))
-			
+
 		case "file_edit":
 			sb.WriteString(fmt.Sprintf("### %s - File Edit\n", timestamp))
 			sb.WriteString(fmt.Sprintf("📄 **File:** `%s`\n", event.Data.Filename))
 			sb.WriteString(fmt.Sprintf("📍 **Position:** Line %d, Column %d\n", event.Data.Line, event.Data.Column))
 			sb.WriteString(fmt.Sprintf("📊 **Total Lines:** %d\n\n", event.Data.LineCount))
-			
+
 		case "terminal_command":
 			sb.WriteString(fmt.Sprintf("### %s - Terminal Command\n", timestamp))
 			sb.WriteString(fmt.Sprintf("💻 ```bash\n%s\n```\n\n", event.Data.Command))
-			
+
 		case "cursor_move":
 			sb.WriteString(fmt.Sprintf("### %s - Cursor Movement\n", timestamp))
 			sb.WriteString(fmt.Sprintf("👆 **File:** `%s`\n", event.Data.Filename))
 			sb.WriteString(fmt.Sprintf("📍 **Position:** Line %d, Column %d\n\n", event.Data.Line, event.Data.Column))
-			
+
 		case "session_resume":
 			sb.WriteString(fmt.Sprintf("### %s - Session Resumed\n", timestamp))
 			sb.WriteString(fmt.Sprintf("🔄 %s\n\n", event.Data.Note))
@@ -77,12 +77,12 @@ func (e *MarkdownExporter) generateMarkdown(session *recorder.Session) string {
 	// Summary
 	sb.WriteString("## Summary\n\n")
 	sb.WriteString(fmt.Sprintf("- **Total Events:** %d\n", len(session.Events)))
-	
+
 	eventCounts := make(map[string]int)
 	for _, event := range session.Events {
 		eventCounts[event.Type]++
 	}
-	
+
 	for eventType, count := range eventCounts {
 		sb.WriteString(fmt.Sprintf("- **%s:** %d\n", strings.Title(strings.ReplaceAll(eventType, "_", " ")), count))
 	}

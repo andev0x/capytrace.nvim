@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/debugstory/recorder"
+	"github.com/andev0x/debugstory.nvim/recorder"
 )
 
 type JSONExporter struct{}

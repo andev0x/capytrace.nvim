@@ -1,7 +1,7 @@
 PLUGIN_NAME = debugstory
 GO_BINARY = bin/$(PLUGIN_NAME)
-GO_SOURCE = go/main.go
-GO_PACKAGES = go/recorder go/exporter
+GO_SOURCE = main.go
+GO_PACKAGES = recorder exporter
 
 .PHONY: all build clean install test
 
@@ -10,7 +10,7 @@ all: build
 build:
 	@echo "Building $(PLUGIN_NAME)..."
 	@mkdir -p bin
-	@cd go && go build -o ../$(GO_BINARY) .
+	go build -o $(GO_BINARY) $(GO_SOURCE)
 
 clean:
 	@echo "Cleaning build artifacts..."
@@ -21,19 +21,19 @@ install: build
 
 test:
 	@echo "Running Go tests..."
-	@cd go && go test ./...
+	go test ./recorder ./exporter
 
 dev: build
 	@echo "Development build complete"
 
 # Go module initialization
 go-mod-init:
-	@cd go && go mod init github.com/debugstory
-	@cd go && go mod tidy
+	go mod init github.com/andev0x/debugstory.nvim
+	go mod tidy
 
 # Format Go code
 fmt:
-	@cd go && go fmt ./...
+	go fmt ./recorder/... ./exporter/... ./main.go
 
 # Check for Go dependencies
 check-deps:
