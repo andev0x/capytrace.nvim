@@ -54,7 +54,7 @@ function M.end_session()
     return
   end
   
-  local result = exec_go_command("end", {session_id})
+  local result = exec_go_command("end", {session_id, config.get().save_path})
   
   if vim.v.shell_error == 0 then
     session_active = false
@@ -78,7 +78,7 @@ function M.add_annotation(note)
   end
   
   if note and note ~= "" then
-    local result = exec_go_command("annotate", {session_id, note})
+    local result = exec_go_command("annotate", {session_id, config.get().save_path, note})
     if vim.v.shell_error == 0 then
       vim.notify("Annotation added", vim.log.levels.INFO)
     else
@@ -99,6 +99,7 @@ function M.record_edit(bufnr, changedtick)
   
   exec_go_command("record-edit", {
     session_id,
+    config.get().save_path,
     filename,
     tostring(cursor_pos[1]),
     tostring(cursor_pos[2]),
@@ -111,7 +112,7 @@ end
 function M.record_terminal_command(cmd)
   if not session_active then return end
   
-  exec_go_command("record-terminal", {session_id, cmd})
+  exec_go_command("record-terminal", {session_id, config.get().save_path, cmd})
 end
 
 -- Setup autocommands for recording
@@ -135,6 +136,7 @@ function M.setup_autocommands()
         local filename = vim.api.nvim_buf_get_name(0)
         exec_go_command("record-cursor", {
           session_id,
+          config.get().save_path,
           filename,
           tostring(cursor_pos[1]),
           tostring(cursor_pos[2])

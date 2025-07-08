@@ -167,13 +167,13 @@ func (s *Session) save() error {
 	return os.WriteFile(sessionPath, data, 0644)
 }
 
-func LoadSession(sessionID string) (*Session, error) {
+func LoadSession(sessionID string, savePath string) (*Session, error) {
 	if session, exists := activeSessions[sessionID]; exists {
 		return session, nil
 	}
 
 	// Try to load from file
-	sessionPath := filepath.Join(getDefaultSavePath(), sessionID+".json")
+	sessionPath := filepath.Join(savePath, sessionID+".json")
 	data, err := os.ReadFile(sessionPath)
 	if err != nil {
 		return nil, err

@@ -37,7 +37,7 @@ jobs:
       - name: Upload Go binary
         uses: actions/upload-artifact@v4
         with:
-          name: debugstory-binary-${{ github.job }}-${{ github.run_number }}
+          name: debugstory-binary-go-${{ matrix.go-version }}-${{ github.run_number }}
           path: bin/debugstory
         if: always()
 
@@ -71,4 +71,4 @@ jobs:
             echo "$files" | xargs stylua
           else
             echo "No Lua files found to lint."
-          fi 
+          fi || true 

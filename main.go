@@ -60,17 +60,19 @@ func handleStart() {
 }
 
 func handleEnd() {
-	if len(os.Args) < 3 {
-		fmt.Fprintf(os.Stderr, "Usage: end <session_id>\n")
+	if len(os.Args) < 4 {
+		fmt.Fprintf(os.Stderr, "Usage: end <session_id> <save_path>\n")
 		os.Exit(1)
 	}
 
 	sessionID := os.Args[2]
-	session, err := recorder.LoadSession(sessionID)
+	savePath := os.Args[3]
+	session, err := recorder.LoadSession(sessionID, savePath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to load session: %v\n", err)
 		os.Exit(1)
 	}
+
 
 	if err := session.End(); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to end session: %v\n", err)
@@ -94,19 +96,21 @@ func handleEnd() {
 }
 
 func handleAnnotate() {
-	if len(os.Args) < 4 {
-		fmt.Fprintf(os.Stderr, "Usage: annotate <session_id> <note>\n")
+	if len(os.Args) < 5 {
+		fmt.Fprintf(os.Stderr, "Usage: annotate <session_id> <save_path> <note>\n")
 		os.Exit(1)
 	}
 
 	sessionID := os.Args[2]
-	note := os.Args[3]
+	savePath := os.Args[3]
+	note := os.Args[4]
 
-	session, err := recorder.LoadSession(sessionID)
+	session, err := recorder.LoadSession(sessionID, savePath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to load session: %v\n", err)
 		os.Exit(1)
 	}
+
 
 	if err := session.AddAnnotation(note); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to add annotation: %v\n", err)
@@ -117,23 +121,25 @@ func handleAnnotate() {
 }
 
 func handleRecordEdit() {
-	if len(os.Args) < 8 {
-		fmt.Fprintf(os.Stderr, "Usage: record-edit <session_id> <filename> <line> <col> <line_count> <changedtick>\n")
+	if len(os.Args) < 9 {
+		fmt.Fprintf(os.Stderr, "Usage: record-edit <session_id> <save_path> <filename> <line> <col> <line_count> <changedtick>\n")
 		os.Exit(1)
 	}
 
 	sessionID := os.Args[2]
-	filename := os.Args[3]
-	line := os.Args[4]
-	col := os.Args[5]
-	lineCount := os.Args[6]
-	changedTick := os.Args[7]
+	savePath := os.Args[3]
+	filename := os.Args[4]
+	line := os.Args[5]
+	col := os.Args[6]
+	lineCount := os.Args[7]
+	changedTick := os.Args[8]
 
-	session, err := recorder.LoadSession(sessionID)
+	session, err := recorder.LoadSession(sessionID, savePath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to load session: %v\n", err)
 		os.Exit(1)
 	}
+
 
 	if err := session.RecordEdit(filename, line, col, lineCount, changedTick); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to record edit: %v\n", err)
@@ -142,19 +148,21 @@ func handleRecordEdit() {
 }
 
 func handleRecordTerminal() {
-	if len(os.Args) < 4 {
-		fmt.Fprintf(os.Stderr, "Usage: record-terminal <session_id> <command>\n")
+	if len(os.Args) < 5 {
+		fmt.Fprintf(os.Stderr, "Usage: record-terminal <session_id> <save_path> <command>\n")
 		os.Exit(1)
 	}
 
 	sessionID := os.Args[2]
-	command := os.Args[3]
+	savePath := os.Args[3]
+	command := os.Args[4]
 
-	session, err := recorder.LoadSession(sessionID)
+	session, err := recorder.LoadSession(sessionID, savePath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to load session: %v\n", err)
 		os.Exit(1)
 	}
+
 
 	if err := session.RecordTerminalCommand(command); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to record terminal command: %v\n", err)
@@ -163,21 +171,23 @@ func handleRecordTerminal() {
 }
 
 func handleRecordCursor() {
-	if len(os.Args) < 6 {
-		fmt.Fprintf(os.Stderr, "Usage: record-cursor <session_id> <filename> <line> <col>\n")
+	if len(os.Args) < 7 {
+		fmt.Fprintf(os.Stderr, "Usage: record-cursor <session_id> <save_path> <filename> <line> <col>\n")
 		os.Exit(1)
 	}
 
 	sessionID := os.Args[2]
-	filename := os.Args[3]
-	line := os.Args[4]
-	col := os.Args[5]
+	savePath := os.Args[3]
+	filename := os.Args[4]
+	line := os.Args[5]
+	col := os.Args[6]
 
-	session, err := recorder.LoadSession(sessionID)
+	session, err := recorder.LoadSession(sessionID, savePath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to load session: %v\n", err)
 		os.Exit(1)
 	}
+
 
 	if err := session.RecordCursorMove(filename, line, col); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to record cursor movement: %v\n", err)
