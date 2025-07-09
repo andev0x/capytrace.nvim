@@ -160,3 +160,12 @@ Pull requests, bug reports, and feature ideas are all welcome! Please open an is
 ## 📜 License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details. 
+
+## 💖 Funding
+
+If you find capytrace.nvim valuable, please consider supporting its development! Your sponsorship helps maintain and improve the project for everyone.
+
+- [Sponsor on GitHub](https://github.com/sponsors/andev0x)
+- [Buy Me a Coffee](https://www.buymeacoffee.com/anvndev)
+
+Thank you for your support! 
