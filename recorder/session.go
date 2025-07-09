@@ -236,5 +236,5 @@ func ResumeSession(sessionName, savePath string) (*Session, error) {
 
 func getDefaultSavePath() string {
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, "debugstories")
+	return filepath.Join(home, "capytrace_logs")
 }

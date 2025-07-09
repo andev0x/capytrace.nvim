@@ -31,5 +31,5 @@ Thumbs.db
 *.temp
 
 # Session files (for testing)
-debugstories/
+capytrace_logs/
 *.json

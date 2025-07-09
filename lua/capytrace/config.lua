@@ -3,7 +3,7 @@ local M = {}
 -- Default configuration
 local default_config = {
 	output_format = "markdown", -- or "json"
-	save_path = vim.fn.expand("~/debugstories/"),
+	save_path = vim.fn.expand("~/capytrace_logs/"),
 	record_terminal = true,
 	record_git_diff = true,
 	auto_save_on_exit = true,

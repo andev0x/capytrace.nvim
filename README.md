@@ -35,7 +35,7 @@
   config = function()
     require("capytrace").setup({
       output_format = "markdown", -- or "json"
-      save_path = "~/debugstories/",
+      save_path = "~/capytrace_logs/",
     })
   end,
 }
