@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/andev0x/debugstory.nvim/recorder"
+	"github.com/andev0x/capytrace.nvim/recorder"
 )
 
 type MarkdownExporter struct{}

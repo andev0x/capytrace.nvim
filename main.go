@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/andev0x/debugstory.nvim/exporter"
-	"github.com/andev0x/debugstory.nvim/recorder"
+	"github.com/andev0x/capytrace.nvim/exporter"
+	"github.com/andev0x/capytrace.nvim/recorder"
 )
 
 func main() {
@@ -73,7 +73,6 @@ func handleEnd() {
 		os.Exit(1)
 	}
 
-
 	if err := session.End(); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to end session: %v\n", err)
 		os.Exit(1)
@@ -111,7 +110,6 @@ func handleAnnotate() {
 		os.Exit(1)
 	}
 
-
 	if err := session.AddAnnotation(note); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to add annotation: %v\n", err)
 		os.Exit(1)
@@ -140,7 +138,6 @@ func handleRecordEdit() {
 		os.Exit(1)
 	}
 
-
 	if err := session.RecordEdit(filename, line, col, lineCount, changedTick); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to record edit: %v\n", err)
 		os.Exit(1)
@@ -162,7 +159,6 @@ func handleRecordTerminal() {
 		fmt.Fprintf(os.Stderr, "Failed to load session: %v\n", err)
 		os.Exit(1)
 	}
-
 
 	if err := session.RecordTerminalCommand(command); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to record terminal command: %v\n", err)
@@ -187,7 +183,6 @@ func handleRecordCursor() {
 		fmt.Fprintf(os.Stderr, "Failed to load session: %v\n", err)
 		os.Exit(1)
 	}
-
 
 	if err := session.RecordCursorMove(filename, line, col); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to record cursor movement: %v\n", err)

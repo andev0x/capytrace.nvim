@@ -1,4 +1,4 @@
-PLUGIN_NAME = debugstory
+PLUGIN_NAME = capytrace
 GO_BINARY = bin/$(PLUGIN_NAME)
 GO_SOURCE = main.go
 GO_PACKAGES = recorder exporter
@@ -28,7 +28,7 @@ dev: build
 
 # Go module initialization
 go-mod-init:
-	go mod init github.com/andev0x/debugstory.nvim
+	go mod init github.com/andev0x/capytrace.nvim
 	go mod tidy
 
 # Format Go code
