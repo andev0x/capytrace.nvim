@@ -1,13 +1,16 @@
 <div align="center">
-  <img src="assets/img/logo-debugstory.gif" alt="DebugStory Logo" />
+  <img src="assets/img/logo-debugstory.gif" alt="DebugStory Logo" width= "200"/>
 
 
 # debugstory.nvim
 
 [![Go](https://img.shields.io/badge/Go-%3E=1.18-blue?logo=go)](https://golang.org/) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) [![Neovim](https://img.shields.io/badge/Neovim-%3E=0.8.0-blueviolet?logo=neovim)](https://neovim.io/)
 
-**debugstory.nvim** is a lightweight Neovim plugin that automatically captures and organizes your debugging journey in real time — across terminal commands, file edits, and code hops. Built with performance and extensibility in mind, it empowers developers to **trace back their debugging steps**, **annotate intent**, and **resume from context** even after switching tasks or machines.
 </div>
+
+---
+
+#### *[debugstory.nvim](https://github.com/andev0x/debugstory.nvim)* is a lightweight Neovim plugin that automatically captures and organizes your debugging journey in real time — across terminal commands, file edits, and code hops. Built with performance and extensibility in mind, it empowers developers to **trace back their debugging steps**, **annotate intent**, and **resume from context** even after switching tasks or machines.
 ---
 
 ## 🚀 Features
@@ -47,7 +50,7 @@
 ```bash
 git clone https://github.com/andev0x/debugstory.nvim.git
 cd debugstory.nvim
-make go-mod-init
+make go mod init
 make build
 ```
 
@@ -138,6 +141,32 @@ git log --oneline -10
 - **Annotations:** 3
 - **Cursor Movements:** 2
 ```
+
+### Example:
+```json
+{
+      "type": "cursor_move",
+      "timestamp": "2025-07-09T07:54:19.904485+07:00",
+      "data": {
+        "filename": "./go-algorithm/convert/NvimTree_1",
+        "line": 3,
+        "column": 6
+      }
+    },
+    {
+      "type": "file_edit",
+      "timestamp": "2025-07-09T07:54:19.922255+07:00",
+      "data": {
+        "filename": "./go-algorithm/convert/NvimTree_1",
+        "line": 3,
+        "column": 6,
+        "line_count": 4,
+        "changed_tick": 12
+      }
+    },
+
+```
+
 ---
 
 ## 🤝 Contributing
