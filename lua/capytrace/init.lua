@@ -1,5 +1,5 @@
 local M = {}
-local config = require("debugstory.config")
+local config = require("capytrace.config")
 
 -- Plugin state
 local session_active = false
@@ -8,7 +8,7 @@ local go_process = nil
 
 -- Helper function to execute Go binary
 local function exec_go_command(cmd, args)
-	local go_binary = vim.fn.stdpath("data") .. "/lazy/debugstory.nvim/bin/debugstory"
+	local go_binary = vim.fn.stdpath("data") .. "/lazy/capytrace.nvim/bin/capytrace"
 	local full_cmd = go_binary .. " " .. cmd
 
 	if args then
@@ -123,7 +123,7 @@ end
 
 -- Setup autocommands for recording
 function M.setup_autocommands()
-	local group = vim.api.nvim_create_augroup("DebugStory", { clear = true })
+	local group = vim.api.nvim_create_augroup("capytrace", { clear = true })
 
 	-- Record file changes
 	vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
@@ -166,7 +166,7 @@ end
 
 -- Clean up autocommands
 function M.cleanup_autocommands()
-	vim.api.nvim_clear_autocmds({ group = "DebugStory" })
+	vim.api.nvim_clear_autocmds({ group = "capytrace" })
 end
 
 -- Get session status
@@ -216,43 +216,43 @@ function M.setup(opts)
 	config.setup(opts)
 
 	-- Create user commands
-	vim.api.nvim_create_user_command("DebugStoryStart", function(args)
+	vim.api.nvim_create_user_command("CapyTraceStart", function(args)
 		M.start_session(args.args ~= "" and args.args or nil)
-	end, { nargs = "?", desc = "Start debug session" })
+	end, { nargs = "?", desc = "Start a new debug session" })
 
-	vim.api.nvim_create_user_command("DebugStoryEnd", function()
+	vim.api.nvim_create_user_command("CapyTraceEnd", function()
 		M.end_session()
-	end, { desc = "End debug session" })
+	end, { desc = "End current session" })
 
-	vim.api.nvim_create_user_command("DebugStoryAnnotate", function(args)
+	vim.api.nvim_create_user_command("CapyTraceAnnotate", function(args)
 		M.add_annotation(args.args ~= "" and args.args or nil)
-	end, { nargs = "?", desc = "Add annotation to session" })
+	end, { nargs = "?", desc = "Add annotation to current session" })
 
-	vim.api.nvim_create_user_command("DebugStoryStatus", function()
+	vim.api.nvim_create_user_command("CapyTraceStatus", function()
 		local status = M.get_status()
 		if status.active then
 			vim.notify("Active session: " .. status.session_id, vim.log.levels.INFO)
 		else
 			vim.notify("No active session", vim.log.levels.INFO)
 		end
-	end, { desc = "Show session status" })
+	end, { desc = "Show current session status" })
 
-	vim.api.nvim_create_user_command("DebugStoryList", function()
+	vim.api.nvim_create_user_command("CapyTraceList", function()
 		local sessions = M.list_sessions()
 		if #sessions > 0 then
 			vim.notify("Available sessions:\n" .. table.concat(sessions, "\n"), vim.log.levels.INFO)
 		else
 			vim.notify("No sessions found", vim.log.levels.INFO)
 		end
-	end, { desc = "List available sessions" })
+	end, { desc = "List all available sessions" })
 
-	vim.api.nvim_create_user_command("DebugStoryResume", function(args)
+	vim.api.nvim_create_user_command("CapyTraceResume", function(args)
 		if args.args == "" then
 			vim.notify("Please specify session name", vim.log.levels.WARN)
 			return
 		end
 		M.resume_session(args.args)
-	end, { nargs = 1, desc = "Resume debug session" })
+	end, { nargs = 1, desc = "Resume a previous session" })
 end
 
 return M

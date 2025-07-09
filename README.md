@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/img/logo-debugstory.gif" alt="Capytrace Logo" width="200"/>
+  <img src="assets/img/capytrace.gif" alt="Capytrace Logo" width="200"/>
 
 
 # capytrace.nvim
@@ -30,10 +30,10 @@
 
 ```lua
 {
-  "andev0x/debugstory.nvim",
+  "andev0x/capytrace.nvim",
   build = "make", -- Optional: if building Go binary
   config = function()
-    require("debugstory").setup({
+    require("capytrace").setup({
       output_format = "markdown", -- or "json"
       save_path = "~/debugstories/",
     })
@@ -48,8 +48,8 @@
 ## 🛠️ Building from Source
 
 ```bash
-git clone https://github.com/andev0x/debugstory.nvim.git
-cd debugstory.nvim
+git clone https://github.com/andev0x/capytrace.nvim.git
+cd capytrace.nvim
 make go mod init
 make build
 ```
@@ -61,38 +61,12 @@ make build
 ### Vim Commands
 
 ```vim
-:DebugStoryStart [project_name]    " Start a new debug session
-:DebugStoryEnd                     " End current session
-:DebugStoryAnnotate [note]         " Add annotation to current session
-:DebugStoryStatus                  " Show current session status
-:DebugStoryList                    " List all available sessions
-:DebugStoryResume <session_name>   " Resume a previous session
-```
-
-### Lua API
-
-```lua
-local debugstory = require("debugstory")
-debugstory.start_session("my_project")
-debugstory.add_annotation("Found the bug in auth.lua")
-local status = debugstory.get_status()
-debugstory.end_session()
-```
-
----
-
-## ⚙️ Configuration
-
-```lua
-require("debugstory").setup({
-  output_format = "markdown", -- or "json"
-  save_path = "~/debugstories/",
-  record_terminal = true,
-  record_git_diff = true,
-  auto_save_on_exit = true,
-  max_cursor_events = 100, -- Limit cursor movement recordings
-  debounce_ms = 500, -- Debounce time for events
-})
+:CapyTraceStart [project_name]    " Start a new debug session
+:CapyTraceEnd                     " End current session
+:CapyTraceAnnotate [note]         " Add annotation to current session
+:CapyTraceStatus                  " Show current session status
+:CapyTraceList                    " List all available sessions
+:CapyTraceResume <session_name>   " Resume a previous session
 ```
 
 ---
