@@ -155,8 +155,12 @@ function M.setup_autocommands()
 	vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
 		group = group,
 		callback = function()
-			if not session_active then return end
-			if edit_timer then edit_timer:stop() end
+			if not session_active then
+				return
+			end
+			if edit_timer then
+				edit_timer:stop()
+			end
 			edit_timer = vim.defer_fn(function()
 				M.record_edit(vim.api.nvim_get_current_buf(), vim.api.nvim_buf_get_changedtick(0))
 			end, config_val.debounce_ms or 500)
@@ -167,9 +171,15 @@ function M.setup_autocommands()
 	vim.api.nvim_create_autocmd("CursorMoved", {
 		group = group,
 		callback = function()
-			if not session_active then return end
-			if cursor_event_count >= (config_val.max_cursor_events or 100) then return end
-			if cursor_timer then cursor_timer:stop() end
+			if not session_active then
+				return
+			end
+			if cursor_event_count >= (config_val.max_cursor_events or 100) then
+				return
+			end
+			if cursor_timer then
+				cursor_timer:stop()
+			end
 			cursor_timer = vim.defer_fn(function()
 				if cursor_event_count < (config_val.max_cursor_events or 100) then
 					local cursor_pos = vim.api.nvim_win_get_cursor(0)
