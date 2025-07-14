@@ -50,11 +50,6 @@ func handleStart() {
 	savePath := os.Args[4]
 	outputFormat := os.Args[5]
 
-	if outputFormat != "json" && outputFormat != "markdown" {
-		fmt.Fprintf(os.Stderr, "Invalid output format: %s. Must be 'json' or 'markdown'\n", outputFormat)
-		os.Exit(1)
-	}
-
 	session := recorder.NewSession(sessionID, projectPath, savePath, outputFormat)
 	if err := session.Start(); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to start session: %v\n", err)
