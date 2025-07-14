@@ -34,24 +34,6 @@ type EventData struct {
 	PrevColumn int `json:"prev_column,omitempty"`
 }
 
-// Add event types for channel-based debounced logging
-
-type editEvent struct {
-	filename    string
-	line        string
-	col         string
-	lineCount   string
-	changedTick string
-}
-
-type cursorEvent struct {
-	filename string
-	line     string
-	col      string
-}
-
-// Add channels to Session
-
 type Session struct {
 	ID           string    `json:"id"`
 	ProjectPath  string    `json:"project_path"`
@@ -61,15 +43,12 @@ type Session struct {
 	EndTime      time.Time `json:"end_time,omitempty"`
 	Events       []Event   `json:"events"`
 	Active       bool      `json:"active"`
-
-	editChan   chan editEvent
-	cursorChan chan cursorEvent
 }
 
 var activeSessions = make(map[string]*Session)
 
 func NewSession(id, projectPath, savePath, outputFormat string) *Session {
-	s := &Session{
+	return &Session{
 		ID:           id,
 		ProjectPath:  projectPath,
 		SavePath:     savePath,
@@ -77,12 +56,7 @@ func NewSession(id, projectPath, savePath, outputFormat string) *Session {
 		StartTime:    time.Now(),
 		Events:       []Event{},
 		Active:       true,
-		editChan:     make(chan editEvent, 100),
-		cursorChan:   make(chan cursorEvent, 100),
 	}
-	go s.debouncedEditLogger()
-	go s.debouncedCursorLogger()
-	return s
 }
 
 func (s *Session) Start() error {
@@ -130,62 +104,17 @@ func (s *Session) AddAnnotation(note string) error {
 	return s.save()
 }
 
-// Debounced logger for file edits
-func (s *Session) debouncedEditLogger() {
-	var (
-		lastEvent editEvent
-		timer     *time.Timer
-	)
-	for evt := range s.editChan {
-		lastEvent = evt
-		if timer != nil {
-			timer.Stop()
-		}
-		timer = time.AfterFunc(500*time.Millisecond, func() {
-			s.logEditEvent(lastEvent)
-		})
-	}
-}
-
-// Debounced logger for cursor moves
-func (s *Session) debouncedCursorLogger() {
-	var (
-		lastEvent cursorEvent
-		timer     *time.Timer
-	)
-	for evt := range s.cursorChan {
-		lastEvent = evt
-		if timer != nil {
-			timer.Stop()
-		}
-		timer = time.AfterFunc(500*time.Millisecond, func() {
-			s.logCursorEvent(lastEvent)
-		})
-	}
-}
-
-// Push file edit event to channel
-func (s *Session) PushEditEvent(filename, line, col, lineCount, changedTick string) {
-	s.editChan <- editEvent{filename, line, col, lineCount, changedTick}
-}
-
-// Push cursor event to channel
-func (s *Session) PushCursorEvent(filename, line, col string) {
-	s.cursorChan <- cursorEvent{filename, line, col}
-}
-
-// Actual logging logic for file edit (called by debounced goroutine)
-func (s *Session) logEditEvent(evt editEvent) {
-	lineNum, _ := strconv.Atoi(evt.line)
-	colNum, _ := strconv.Atoi(evt.col)
-	lineCountNum, _ := strconv.Atoi(evt.lineCount)
-	changedTickNum, _ := strconv.Atoi(evt.changedTick)
+func (s *Session) RecordEdit(filename, line, col, lineCount, changedTick string) error {
+	lineNum, _ := strconv.Atoi(line)
+	colNum, _ := strconv.Atoi(col)
+	lineCountNum, _ := strconv.Atoi(lineCount)
+	changedTickNum, _ := strconv.Atoi(changedTick)
 
 	event := Event{
 		Type:      "file_edit",
 		Timestamp: time.Now(),
 		Data: EventData{
-			Filename:    evt.filename,
+			Filename:    filename,
 			Line:        lineNum,
 			Column:      colNum,
 			LineCount:   lineCountNum,
@@ -194,37 +123,7 @@ func (s *Session) logEditEvent(evt editEvent) {
 	}
 
 	s.Events = append(s.Events, event)
-	_ = s.save()
-}
-
-// Actual logging logic for cursor move (called by debounced goroutine)
-func (s *Session) logCursorEvent(evt cursorEvent) {
-	lineNum, _ := strconv.Atoi(evt.line)
-	colNum, _ := strconv.Atoi(evt.col)
-
-	event := Event{
-		Type:      "cursor_move",
-		Timestamp: time.Now(),
-		Data: EventData{
-			Filename: evt.filename,
-			Line:     lineNum,
-			Column:   colNum,
-		},
-	}
-
-	s.Events = append(s.Events, event)
-	_ = s.save()
-}
-
-// Update RecordEdit and RecordCursorMove to use channels
-func (s *Session) RecordEdit(filename, line, col, lineCount, changedTick string) error {
-	s.PushEditEvent(filename, line, col, lineCount, changedTick)
-	return nil
-}
-
-func (s *Session) RecordCursorMove(filename, line, col string) error {
-	s.PushCursorEvent(filename, line, col)
-	return nil
+	return s.save()
 }
 
 func (s *Session) RecordTerminalCommand(command string) error {
@@ -233,6 +132,24 @@ func (s *Session) RecordTerminalCommand(command string) error {
 		Timestamp: time.Now(),
 		Data: EventData{
 			Command: command,
+		},
+	}
+
+	s.Events = append(s.Events, event)
+	return s.save()
+}
+
+func (s *Session) RecordCursorMove(filename, line, col string) error {
+	lineNum, _ := strconv.Atoi(line)
+	colNum, _ := strconv.Atoi(col)
+
+	event := Event{
+		Type:      "cursor_move",
+		Timestamp: time.Now(),
+		Data: EventData{
+			Filename: filename,
+			Line:     lineNum,
+			Column:   colNum,
 		},
 	}
 

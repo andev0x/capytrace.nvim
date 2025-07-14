@@ -6,6 +6,24 @@ local session_active = false
 local session_id = nil
 local go_process = nil
 
+-- Debounce and event limit state
+local cursor_timer = nil
+local edit_timer = nil
+local cursor_event_count = 0
+
+-- Helper function to reset state on session start/end
+local function reset_event_state()
+	cursor_event_count = 0
+	if cursor_timer then
+		cursor_timer:stop()
+		cursor_timer = nil
+	end
+	if edit_timer then
+		edit_timer:stop()
+		edit_timer = nil
+	end
+end
+
 -- Helper function to execute Go binary
 local function exec_go_command(cmd, args, opts)
 	local go_binary = vim.fn.stdpath("data") .. "/lazy/capytrace.nvim/bin/capytrace"
@@ -46,6 +64,7 @@ function M.start_session(project_name)
 	if vim.v.shell_error == 0 then
 		session_active = true
 		vim.notify("Debug session started: " .. session_id, vim.log.levels.INFO)
+		reset_event_state()
 		M.setup_autocommands()
 	else
 		vim.notify("Failed to start debug session: " .. result, vim.log.levels.ERROR)
@@ -65,6 +84,7 @@ function M.end_session()
 		session_active = false
 		session_id = nil
 		vim.notify("Debug session ended and saved", vim.log.levels.INFO)
+		reset_event_state()
 		M.cleanup_autocommands()
 	else
 		vim.notify("Failed to end debug session: " .. result, vim.log.levels.ERROR)
@@ -129,35 +149,46 @@ end
 -- Setup autocommands for recording
 function M.setup_autocommands()
 	local group = vim.api.nvim_create_augroup("capytrace", { clear = true })
+	local config_val = config.get()
 
-	-- Record file changes
+	-- Debounced edit recording
 	vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
 		group = group,
 		callback = function()
-			M.record_edit(vim.api.nvim_get_current_buf(), vim.api.nvim_buf_get_changedtick(0))
+			if not session_active then return end
+			if edit_timer then edit_timer:stop() end
+			edit_timer = vim.defer_fn(function()
+				M.record_edit(vim.api.nvim_get_current_buf(), vim.api.nvim_buf_get_changedtick(0))
+			end, config_val.debounce_ms or 500)
 		end,
 	})
 
-	-- Record cursor movements
+	-- Debounced and limited cursor movement recording
 	vim.api.nvim_create_autocmd("CursorMoved", {
 		group = group,
 		callback = function()
-			if session_active then
-				local cursor_pos = vim.api.nvim_win_get_cursor(0)
-				local filename = vim.api.nvim_buf_get_name(0)
-				exec_go_command("record-cursor", {
-					session_id,
-					config.get().save_path,
-					filename,
-					tostring(cursor_pos[1]),
-					tostring(cursor_pos[2]),
-				}, { async = true })
-			end
+			if not session_active then return end
+			if cursor_event_count >= (config_val.max_cursor_events or 100) then return end
+			if cursor_timer then cursor_timer:stop() end
+			cursor_timer = vim.defer_fn(function()
+				if cursor_event_count < (config_val.max_cursor_events or 100) then
+					local cursor_pos = vim.api.nvim_win_get_cursor(0)
+					local filename = vim.api.nvim_buf_get_name(0)
+					exec_go_command("record-cursor", {
+						session_id,
+						config_val.save_path,
+						filename,
+						tostring(cursor_pos[1]),
+						tostring(cursor_pos[2]),
+					}, { async = true })
+					cursor_event_count = cursor_event_count + 1
+				end
+			end, config_val.debounce_ms or 500)
 		end,
 	})
 
 	-- Auto-save on exit
-	if config.get().auto_save_on_exit then
+	if config_val.auto_save_on_exit then
 		vim.api.nvim_create_autocmd("VimLeavePre", {
 			group = group,
 			callback = function()
