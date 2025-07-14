@@ -33,6 +33,10 @@ func main() {
 		handleList()
 	case "resume":
 		handleResume()
+	case "record-file-open":
+		handleRecordFileOpen()
+	case "record-lsp-diagnostic":
+		handleRecordLSPDiagnostic()
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", command)
 		os.Exit(1)
@@ -224,4 +228,53 @@ func handleResume() {
 	}
 
 	fmt.Printf("Session resumed: %s\n", session.ID)
+}
+
+func handleRecordFileOpen() {
+    if len(os.Args) < 6 {
+        fmt.Fprintf(os.Stderr, "Usage: record-file-open <session_id> <save_path> <filename> <filetype>\n")
+        os.Exit(1)
+    }
+
+    sessionID := os.Args[2]
+    savePath := os.Args[3]
+    filename := os.Args[4]
+    filetype := os.Args[5]
+
+    session, err := recorder.LoadSession(sessionID, savePath)
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Failed to load session: %v\n", err)
+        os.Exit(1)
+    }
+
+    if err := session.RecordFileOpen(filename, filetype); err != nil {
+        fmt.Fprintf(os.Stderr, "Failed to record file open: %v\n", err)
+        os.Exit(1)
+    }
+}
+
+func handleRecordLSPDiagnostic() {
+    if len(os.Args) < 9 {
+        fmt.Fprintf(os.Stderr, "Usage: record-lsp-diagnostic <session_id> <save_path> <filename> <line> <col> <message> <level>\n")
+        os.Exit(1)
+    }
+
+    sessionID := os.Args[2]
+    savePath := os.Args[3]
+    filename := os.Args[4]
+    line := os.Args[5]
+    col := os.Args[6]
+    message := os.Args[7]
+    level := os.Args[8]
+
+    session, err := recorder.LoadSession(sessionID, savePath)
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "Failed to load session: %v\n", err)
+        os.Exit(1)
+    }
+
+    if err := session.RecordLSPDiagnostic(filename, line, col, message, level); err != nil {
+        fmt.Fprintf(os.Stderr, "Failed to record lsp diagnostic: %v\n", err)
+        os.Exit(1)
+    }
 }

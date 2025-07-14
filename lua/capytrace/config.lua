@@ -9,6 +9,11 @@ local default_config = {
 	auto_save_on_exit = true,
 	max_cursor_events = 100, -- Limit cursor movement recordings
 	debounce_ms = 500, -- Debounce time for events
+	log_events = {
+		terminal_commands = true,
+		file_open = true,
+		lsp_diagnostics = true,
+	},
 }
 
 local config = {}
