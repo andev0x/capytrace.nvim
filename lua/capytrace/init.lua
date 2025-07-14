@@ -121,6 +121,48 @@ function M.record_terminal_command(cmd)
 	exec_go_command("record-terminal", { session_id, config.get().save_path, cmd })
 end
 
+-- Record file open
+function M.record_file_open(bufnr)
+	if not session_active then
+		return
+	end
+
+	local filename = vim.api.nvim_buf_get_name(bufnr)
+	if filename == "" then
+		return
+	end
+
+	local filetype = vim.bo[bufnr].filetype
+	exec_go_command("record-file-open", { session_id, config.get().save_path, filename, filetype })
+end
+
+-- Record LSP diagnostic
+function M.record_lsp_diagnostic()
+	if not session_active then
+		return
+	end
+
+	local diagnostics = vim.lsp.diagnostic.get_line_diagnostics()
+	if #diagnostics == 0 then
+		return
+	end
+
+	local filename = vim.api.nvim_buf_get_name(0)
+	local cursor_pos = vim.api.nvim_win_get_cursor(0)
+
+	for _, diagnostic in ipairs(diagnostics) do
+		exec_go_command("record-lsp-diagnostic", {
+			session_id,
+			config.get().save_path,
+			filename,
+			tostring(cursor_pos[1]),
+			tostring(cursor_pos[2]),
+			diagnostic.message,
+			vim.lsp.protocol.DiagnosticSeverity[diagnostic.severity],
+		})
+	end
+end
+
 -- Setup autocommands for recording
 function M.setup_autocommands()
 	local group = vim.api.nvim_create_augroup("capytrace", { clear = true })
@@ -159,6 +201,36 @@ function M.setup_autocommands()
 				if session_active then
 					M.end_session()
 				end
+			end,
+		})
+	end
+
+	-- Log terminal commands
+	if config.get().log_events.terminal_commands then
+		vim.api.nvim_create_autocmd("TermOpen", {
+			group = group,
+			callback = function()
+				M.record_terminal_command("Terminal opened")
+			end,
+		})
+	end
+
+	-- Log file open
+	if config.get().log_events.file_open then
+		vim.api.nvim_create_autocmd("BufEnter", {
+			group = group,
+			callback = function()
+				M.record_file_open(vim.api.nvim_get_current_buf())
+			end,
+		})
+	end
+
+	-- Log LSP diagnostics
+	if config.get().log_events.lsp_diagnostics then
+		vim.api.nvim_create_autocmd("DiagnosticChanged", {
+			group = group,
+			callback = function()
+				M.record_lsp_diagnostic()
 			end,
 		})
 	end

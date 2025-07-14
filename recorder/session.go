@@ -23,6 +23,13 @@ type EventData struct {
 	LineCount   int    `json:"line_count,omitempty"`
 	ChangedTick int    `json:"changed_tick,omitempty"`
 
+	// File open events
+	FileType string `json:"file_type,omitempty"`
+
+	// LSP diagnostics events
+	Message string `json:"message,omitempty"`
+	Level   string `json:"level,omitempty"`
+
 	// Terminal events
 	Command string `json:"command,omitempty"`
 
@@ -150,6 +157,40 @@ func (s *Session) RecordCursorMove(filename, line, col string) error {
 			Filename: filename,
 			Line:     lineNum,
 			Column:   colNum,
+		},
+	}
+
+	s.Events = append(s.Events, event)
+	return s.save()
+}
+
+func (s *Session) RecordFileOpen(filename, filetype string) error {
+	event := Event{
+		Type:      "file_open",
+		Timestamp: time.Now(),
+		Data: EventData{
+			Filename: filename,
+			FileType: filetype,
+		},
+	}
+
+	s.Events = append(s.Events, event)
+	return s.save()
+}
+
+func (s *Session) RecordLSPDiagnostic(filename, line, col, message, level string) error {
+	lineNum, _ := strconv.Atoi(line)
+	colNum, _ := strconv.Atoi(col)
+
+	event := Event{
+		Type:      "lsp_diagnostic",
+		Timestamp: time.Now(),
+		Data: EventData{
+			Filename: filename,
+			Line:     lineNum,
+			Column:   colNum,
+			Message:  message,
+			Level:    level,
 		},
 	}
 
