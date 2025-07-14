@@ -7,7 +7,7 @@ local session_id = nil
 local go_process = nil
 
 -- Helper function to execute Go binary
-local function exec_go_command(cmd, args)
+local function exec_go_command(cmd, args, opts)
 	local go_binary = vim.fn.stdpath("data") .. "/lazy/capytrace.nvim/bin/capytrace"
 	local full_cmd = go_binary .. " " .. cmd
 
@@ -17,8 +17,13 @@ local function exec_go_command(cmd, args)
 		end
 	end
 
-	local result = vim.fn.system(full_cmd)
-	return result
+	-- Use jobstart for async event logging (edit, cursor, terminal)
+	if opts and opts.async then
+		vim.fn.jobstart(full_cmd)
+		return nil
+	else
+		return vim.fn.system(full_cmd)
+	end
 end
 
 -- Start a new debug session
@@ -109,7 +114,7 @@ function M.record_edit(bufnr, changedtick)
 		tostring(cursor_pos[2]),
 		tostring(line_count),
 		tostring(changedtick),
-	})
+	}, { async = true })
 end
 
 -- Record terminal command
@@ -118,7 +123,7 @@ function M.record_terminal_command(cmd)
 		return
 	end
 
-	exec_go_command("record-terminal", { session_id, config.get().save_path, cmd })
+	exec_go_command("record-terminal", { session_id, config.get().save_path, cmd }, { async = true })
 end
 
 -- Setup autocommands for recording
@@ -146,7 +151,7 @@ function M.setup_autocommands()
 					filename,
 					tostring(cursor_pos[1]),
 					tostring(cursor_pos[2]),
-				})
+				}, { async = true })
 			end
 		end,
 	})
