@@ -4,7 +4,7 @@
 # capytrace.nvim
 
 [![Go](https://img.shields.io/badge/Go-%3E=1.18-blue?logo=go)](https://golang.org/) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) [![Neovim](https://img.shields.io/badge/Neovim-%3E=0.9.0-blueviolet?logo=neovim)](https://neovim.io/)
-[![Go Report Card](https://goreportcard.com/badge/github.com/andev0x/gitmit)](https://goreportcard.com/report/github.com/andev0x/gitmit)
+[![Go Report Card](https://goreportcard.com/badge/github.com/andev0x/capytrace.nvim)](https://goreportcard.com/report/github.com/andev0x/capytrace.nvim)
 </div>
 
 ---
