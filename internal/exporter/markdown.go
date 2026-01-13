@@ -7,23 +7,26 @@ import (
 	"strings"
 	"time"
 
-	"github.com/andev0x/capytrace.nvim/recorder"
+	"github.com/andev0x/capytrace.nvim/internal/models"
 )
 
+// MarkdownExporter exports sessions as human-readable Markdown files.
 type MarkdownExporter struct{}
 
-func (e *MarkdownExporter) Export(session *recorder.Session, savePath string) error {
+// Export writes a session to disk as a Markdown file with a detailed timeline and summary.
+func (e *MarkdownExporter) Export(session *models.Session, savePath string) error {
 	filename := fmt.Sprintf("%s.md", session.ID)
-	filepath := filepath.Join(savePath, filename)
+	fullPath := filepath.Join(savePath, filename)
 
 	content := e.generateMarkdown(session)
-	return os.WriteFile(filepath, []byte(content), 0644)
+	return os.WriteFile(fullPath, []byte(content), 0644)
 }
 
-func (e *MarkdownExporter) generateMarkdown(session *recorder.Session) string {
+// generateMarkdown creates a formatted Markdown document from a session.
+func (e *MarkdownExporter) generateMarkdown(session *models.Session) string {
 	var sb strings.Builder
 
-	// Header
+	// Header section with session metadata
 	sb.WriteString(fmt.Sprintf("# Debug Session: %s\n\n", session.ID))
 	sb.WriteString(fmt.Sprintf("**Project:** %s\n", session.ProjectPath))
 	sb.WriteString(fmt.Sprintf("**Started:** %s\n", session.StartTime.Format(time.RFC3339)))
@@ -34,7 +37,7 @@ func (e *MarkdownExporter) generateMarkdown(session *recorder.Session) string {
 	}
 	sb.WriteString("\n---\n\n")
 
-	// Timeline
+	// Timeline section with all events
 	sb.WriteString("## Timeline\n\n")
 
 	for _, event := range session.Events {
@@ -49,6 +52,10 @@ func (e *MarkdownExporter) generateMarkdown(session *recorder.Session) string {
 			sb.WriteString(fmt.Sprintf("### %s - Session Ended\n", timestamp))
 			sb.WriteString(fmt.Sprintf("🏁 %s\n\n", event.Data.Note))
 
+		case "session_resume":
+			sb.WriteString(fmt.Sprintf("### %s - Session Resumed\n", timestamp))
+			sb.WriteString(fmt.Sprintf("🔄 %s\n\n", event.Data.Note))
+
 		case "annotation":
 			sb.WriteString(fmt.Sprintf("### %s - Note\n", timestamp))
 			sb.WriteString(fmt.Sprintf("📝 %s\n\n", event.Data.Note))
@@ -59,6 +66,15 @@ func (e *MarkdownExporter) generateMarkdown(session *recorder.Session) string {
 			sb.WriteString(fmt.Sprintf("📍 **Position:** Line %d, Column %d\n", event.Data.Line, event.Data.Column))
 			sb.WriteString(fmt.Sprintf("📊 **Total Lines:** %d\n\n", event.Data.LineCount))
 
+		case "file_open":
+			sb.WriteString(fmt.Sprintf("### %s - File Opened\n", timestamp))
+			sb.WriteString(fmt.Sprintf("📂 **File:** `%s`\n", event.Data.Filename))
+			if event.Data.FileType != "" {
+				sb.WriteString(fmt.Sprintf("📋 **Type:** %s\n\n", event.Data.FileType))
+			} else {
+				sb.WriteString("\n")
+			}
+
 		case "terminal_command":
 			sb.WriteString(fmt.Sprintf("### %s - Terminal Command\n", timestamp))
 			sb.WriteString(fmt.Sprintf("💻 ```bash\n%s\n```\n\n", event.Data.Command))
@@ -68,13 +84,16 @@ func (e *MarkdownExporter) generateMarkdown(session *recorder.Session) string {
 			sb.WriteString(fmt.Sprintf("👆 **File:** `%s`\n", event.Data.Filename))
 			sb.WriteString(fmt.Sprintf("📍 **Position:** Line %d, Column %d\n\n", event.Data.Line, event.Data.Column))
 
-		case "session_resume":
-			sb.WriteString(fmt.Sprintf("### %s - Session Resumed\n", timestamp))
-			sb.WriteString(fmt.Sprintf("🔄 %s\n\n", event.Data.Note))
+		case "lsp_diagnostic":
+			sb.WriteString(fmt.Sprintf("### %s - LSP Diagnostic\n", timestamp))
+			sb.WriteString(fmt.Sprintf("🔍 **File:** `%s`\n", event.Data.Filename))
+			sb.WriteString(fmt.Sprintf("📍 **Position:** Line %d, Column %d\n", event.Data.Line, event.Data.Column))
+			sb.WriteString(fmt.Sprintf("⚠️  **Level:** %s\n", event.Data.Level))
+			sb.WriteString(fmt.Sprintf("💬 **Message:** %s\n\n", event.Data.Message))
 		}
 	}
 
-	// Summary
+	// Summary section with event counts
 	sb.WriteString("## Summary\n\n")
 	sb.WriteString(fmt.Sprintf("- **Total Events:** %d\n", len(session.Events)))
 
@@ -84,8 +103,19 @@ func (e *MarkdownExporter) generateMarkdown(session *recorder.Session) string {
 	}
 
 	for eventType, count := range eventCounts {
-		sb.WriteString(fmt.Sprintf("- **%s:** %d\n", strings.Title(strings.ReplaceAll(eventType, "_", " ")), count))
+		sb.WriteString(fmt.Sprintf("- **%s:** %d\n", formatEventType(eventType), count))
 	}
 
 	return sb.String()
+}
+
+// formatEventType converts snake_case event types to Title Case for display.
+func formatEventType(eventType string) string {
+	words := strings.Split(eventType, "_")
+	for i, word := range words {
+		if len(word) > 0 {
+			words[i] = strings.ToUpper(word[:1]) + word[1:]
+		}
+	}
+	return strings.Join(words, " ")
 }
