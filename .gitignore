@@ -8,7 +8,6 @@ bin/
 # Go
 *.test
 *.out
-go.sum
 
 # Neovim
 *.swp
