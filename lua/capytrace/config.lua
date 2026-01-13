@@ -2,13 +2,15 @@ local M = {}
 
 -- Default configuration
 local default_config = {
-	output_format = "markdown", -- or "json"
+	output_format = "markdown", -- or "json" or "sqlite"
 	save_path = vim.fn.expand("~/capytrace_logs/"),
 	record_terminal = true,
 	record_git_diff = true,
 	auto_save_on_exit = true,
 	max_cursor_events = 100, -- Limit cursor movement recordings
-	debounce_ms = 500, -- Debounce time for events
+	-- Smart Filter configuration (Anti-Spam Cursor Filter)
+	filter_threshold = 500, -- Idle threshold in milliseconds (default: 500ms)
+	debounce_interval = 200, -- Debounce interval for cursor movements (default: 200ms)
 	log_events = {
 		terminal_commands = true,
 		file_open = true,

@@ -1,7 +1,7 @@
 PLUGIN_NAME = capytrace
 GO_BINARY = bin/$(PLUGIN_NAME)
-GO_SOURCE = main.go
-GO_PACKAGES = recorder exporter
+GO_SOURCE = cmd/capytrace/main.go
+GO_PACKAGES = internal/recorder internal/exporter internal/filter internal/models
 
 .PHONY: all build clean install test
 
@@ -21,7 +21,7 @@ install: build
 
 test:
 	@echo "Running Go tests..."
-	go test ./recorder ./exporter
+	go test ./internal/recorder ./internal/exporter ./internal/filter ./internal/models
 
 dev: build
 	@echo "Development build complete"
@@ -33,9 +33,11 @@ go-mod-init:
 
 # Format Go code
 fmt:
-	go fmt ./recorder/*.go
-	go fmt ./exporter/*.go
-	go fmt ./main.go
+	go fmt ./internal/recorder/*.go
+	go fmt ./internal/exporter/*.go
+	go fmt ./internal/filter/*.go
+	go fmt ./internal/models/*.go
+	go fmt ./cmd/capytrace/*.go
 
 # Check for Go dependencies
 check-deps:
