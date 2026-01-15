@@ -105,13 +105,15 @@ func (s *Session) Start() error {
 	activeSessionsMu.Unlock()
 
 	// Record initial event
-	s.addEvent(models.Event{
+	if err := s.addEvent(models.Event{
 		Type:      "session_start",
 		Timestamp: s.StartTime,
 		Data: models.EventData{
 			Note: fmt.Sprintf("Started debugging session in %s", s.ProjectPath),
 		},
-	})
+	}); err != nil {
+		return fmt.Errorf("failed to add initial event: %w", err)
+	}
 
 	return s.save()
 }
@@ -126,7 +128,7 @@ func (s *Session) End() error {
 
 	// Flush any pending cursor events
 	if pendingEvent := s.cursorFilter.FlushPending(); pendingEvent != nil {
-		s.Session.Events = append(s.Session.Events, *pendingEvent)
+		s.Events = append(s.Events, *pendingEvent)
 	}
 
 	s.cursorFilter.Stop()
@@ -134,7 +136,7 @@ func (s *Session) End() error {
 	s.Active = false
 
 	// Record end event
-	s.Session.Events = append(s.Session.Events, models.Event{
+	s.Events = append(s.Events, models.Event{
 		Type:      "session_end",
 		Timestamp: s.EndTime,
 		Data: models.EventData{
@@ -191,7 +193,9 @@ func (s *Session) RecordEdit(filename, line, col, lineCount, changedTick string)
 
 	// File edits are context triggers - process through filter first
 	if filteredEvent := s.cursorFilter.ProcessEvent(&event); filteredEvent != nil {
-		s.addEvent(*filteredEvent)
+		if err := s.addEvent(*filteredEvent); err != nil {
+			return fmt.Errorf("failed to add filtered event: %w", err)
+		}
 	}
 
 	return s.addEvent(event)
@@ -209,7 +213,9 @@ func (s *Session) RecordTerminalCommand(command string) error {
 
 	// Terminal commands are context triggers
 	if filteredEvent := s.cursorFilter.ProcessEvent(&event); filteredEvent != nil {
-		s.addEvent(*filteredEvent)
+		if err := s.addEvent(*filteredEvent); err != nil {
+			return fmt.Errorf("failed to add filtered event: %w", err)
+		}
 	}
 
 	return s.addEvent(event)
@@ -276,7 +282,7 @@ func (s *Session) RecordLSPDiagnostic(filename, line, col, message, level string
 // addEvent appends an event to the session and persists it.
 func (s *Session) addEvent(event models.Event) error {
 	s.mu.Lock()
-	s.Session.Events = append(s.Session.Events, event)
+	s.Events = append(s.Events, event)
 	s.mu.Unlock()
 
 	return s.save()
@@ -410,13 +416,15 @@ func ResumeSession(sessionName, savePath string, filterConfig *filter.FilterConf
 	session.startPeriodicAggregation(5 * time.Minute)
 
 	// Record resume event
-	session.addEvent(models.Event{
+	if err := session.addEvent(models.Event{
 		Type:      "session_resume",
 		Timestamp: time.Now(),
 		Data: models.EventData{
 			Note: "Session resumed",
 		},
-	})
+	}); err != nil {
+		return nil, fmt.Errorf("failed to add resume event: %w", err)
+	}
 
 	return session, session.save()
 }

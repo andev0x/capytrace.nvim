@@ -8,11 +8,11 @@ local default_config = {
 	record_git_diff = true,
 	auto_save_on_exit = true,
 	max_cursor_events = 100, -- Limit cursor movement recordings
-	
+
 	-- Smart Filter configuration (Anti-Spam Cursor Filter)
 	filter_threshold = 500, -- Idle threshold in milliseconds (default: 500ms)
 	debounce_interval = 200, -- Debounce interval for cursor movements (default: 200ms)
-	
+
 	-- Smart Aggregation configuration (Activity Block Builder)
 	aggregation = {
 		merge_window = 2000, -- Time window for merging file_edit events in milliseconds (default: 2s)
@@ -28,7 +28,7 @@ local default_config = {
 		},
 		periodic_update_interval = 300000, -- Update SESSION_SUMMARY.md every N milliseconds (default: 5min)
 	},
-	
+
 	log_events = {
 		terminal_commands = true,
 		file_open = true,

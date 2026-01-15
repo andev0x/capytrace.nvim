@@ -3,6 +3,7 @@ package exporter
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -30,7 +31,11 @@ func (e *SQLiteExporter) Export(session *models.Session, savePath string) error 
 	if err != nil {
 		return fmt.Errorf("failed to open database: %w", err)
 	}
-	defer db.Close()
+	defer func() {
+		if closeErr := db.Close(); closeErr != nil {
+			fmt.Fprintf(os.Stderr, "Failed to close database: %v\n", closeErr)
+		}
+	}()
 
 	// Create tables if they don't exist
 	if err := e.createTables(db); err != nil {
@@ -42,7 +47,11 @@ func (e *SQLiteExporter) Export(session *models.Session, savePath string) error 
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil && rollbackErr != sql.ErrTxDone {
+			fmt.Fprintf(os.Stderr, "Failed to rollback transaction: %v\n", rollbackErr)
+		}
+	}()
 
 	// Insert or update session
 	_, err = tx.Exec(`
@@ -151,7 +160,11 @@ func (e *SQLiteExporter) GetSessionStats(sessionID string) (*models.SessionSumma
 	if err != nil {
 		return nil, err
 	}
-	defer db.Close()
+	defer func() {
+		if closeErr := db.Close(); closeErr != nil {
+			fmt.Fprintf(os.Stderr, "Failed to close database: %v\n", closeErr)
+		}
+	}()
 
 	var summary models.SessionSummary
 	var startTime, endTime time.Time
@@ -177,7 +190,11 @@ func (e *SQLiteExporter) GetSessionStats(sessionID string) (*models.SessionSumma
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			fmt.Fprintf(os.Stderr, "Failed to close rows: %v\n", closeErr)
+		}
+	}()
 
 	for rows.Next() {
 		var eventType string
