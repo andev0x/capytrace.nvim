@@ -62,3 +62,57 @@ type SessionSummary struct {
 	Annotations      int
 	CursorMoves      int
 }
+
+// ActivityBlock represents a merged group of related events within a short time window.
+// Used for aggregating file_edit events that occur within 2 seconds.
+type ActivityBlock struct {
+	StartTime  time.Time     `json:"start_time"`
+	EndTime    time.Time     `json:"end_time"`
+	Duration   time.Duration `json:"duration"`
+	Filename   string        `json:"filename"`
+	EventCount int           `json:"event_count"`
+	StartTick  int           `json:"start_tick"`
+	EndTick    int           `json:"end_tick"`
+	DeltaTick  int           `json:"delta_tick"`
+	Velocity   float64       `json:"velocity"` // Delta Tick / Duration in seconds
+	Events     []Event       `json:"events"`
+	ClosedBy   string        `json:"closed_by"` // "context_switch", "idle", "timeout"
+}
+
+// IdleGap represents a period of inactivity during the session.
+// Used to identify moments when the developer might be stuck or taking a break.
+type IdleGap struct {
+	StartTime time.Time     `json:"start_time"`
+	EndTime   time.Time     `json:"end_time"`
+	Duration  time.Duration `json:"duration"`
+}
+
+// SessionAnalytics provides advanced metrics about a coding session.
+type SessionAnalytics struct {
+	// Velocity metrics
+	AverageVelocity float64         `json:"average_velocity"`
+	PeakVelocity    float64         `json:"peak_velocity"`
+	FlowBlocks      []ActivityBlock `json:"flow_blocks"` // High velocity blocks
+
+	// Focus metrics
+	FocusRatio      float64        `json:"focus_ratio"`      // Main file time / Total time
+	MainFiles       map[string]int `json:"main_files"`       // File -> time spent (seconds)
+	DistractionTime int            `json:"distraction_time"` // Time in NvimTree, copilot-chat, etc.
+
+	// Error correction patterns
+	ErrorCorrections []ErrorPattern `json:"error_corrections"`
+
+	// Idle analysis
+	IdleGaps      []IdleGap     `json:"idle_gaps"`
+	TotalIdleTime time.Duration `json:"total_idle_time"`
+}
+
+// ErrorPattern represents a detected error correction event.
+type ErrorPattern struct {
+	Timestamp      time.Time `json:"timestamp"`
+	Filename       string    `json:"filename"`
+	Annotation     string    `json:"annotation"`
+	LinesDeleted   int       `json:"lines_deleted"`
+	TicksReversed  int       `json:"ticks_reversed"` // Negative delta
+	BlocksAffected int       `json:"blocks_affected"`
+}

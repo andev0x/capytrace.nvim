@@ -8,9 +8,12 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/andev0x/capytrace.nvim/internal/aggregator"
+	"github.com/andev0x/capytrace.nvim/internal/exporter"
 	"github.com/andev0x/capytrace.nvim/internal/filter"
 	"github.com/andev0x/capytrace.nvim/internal/models"
 )
@@ -23,14 +26,18 @@ var (
 // Session wraps a models.Session with additional runtime state and filtering capabilities.
 type Session struct {
 	*models.Session
-	mu           sync.Mutex
-	cursorFilter *filter.CursorFilter
+	mu               sync.Mutex
+	cursorFilter     *filter.CursorFilter
+	aggregatorConfig *aggregator.AggregatorConfig
+	periodicTicker   *time.Ticker
+	stopPeriodicChan chan struct{}
 }
 
 // NewSession creates a new debugging session with the specified parameters.
-// It initializes the session with a cursor filter to reduce noise from rapid movements.
+// It initializes the session with a cursor filter to reduce noise from rapid movements
+// and starts a background goroutine for periodic SESSION_SUMMARY.md updates.
 func NewSession(id, projectPath, savePath, outputFormat string, filterConfig *filter.FilterConfig) *Session {
-	return &Session{
+	session := &Session{
 		Session: &models.Session{
 			ID:           id,
 			ProjectPath:  projectPath,
@@ -40,8 +47,55 @@ func NewSession(id, projectPath, savePath, outputFormat string, filterConfig *fi
 			Events:       []models.Event{},
 			Active:       true,
 		},
-		cursorFilter: filter.NewCursorFilter(filterConfig),
+		cursorFilter:     filter.NewCursorFilter(filterConfig),
+		aggregatorConfig: aggregator.DefaultConfig(),
+		stopPeriodicChan: make(chan struct{}),
 	}
+
+	// Start periodic aggregation updates (every 5 minutes)
+	session.startPeriodicAggregation(5 * time.Minute)
+
+	return session
+}
+
+// startPeriodicAggregation starts a background goroutine that regenerates
+// SESSION_SUMMARY.md every interval.
+func (s *Session) startPeriodicAggregation(interval time.Duration) {
+	s.periodicTicker = time.NewTicker(interval)
+
+	go func() {
+		for {
+			select {
+			case <-s.periodicTicker.C:
+				// Regenerate SESSION_SUMMARY.md
+				s.regenerateSummary()
+			case <-s.stopPeriodicChan:
+				return
+			}
+		}
+	}()
+}
+
+// regenerateSummary updates the SESSION_SUMMARY.md file with current session data.
+func (s *Session) regenerateSummary() {
+	s.mu.Lock()
+	sessionCopy := *s.Session
+	s.mu.Unlock()
+
+	// Use SmartMarkdownExporter to generate updated summary
+	smartExporter := exporter.NewSmartMarkdownExporter(s.aggregatorConfig)
+	if err := smartExporter.Export(&sessionCopy, s.SavePath); err != nil {
+		// Log error but don't fail the session
+		fmt.Fprintf(os.Stderr, "Failed to regenerate session summary: %v\n", err)
+	}
+}
+
+// stopPeriodicAggregation stops the background aggregation goroutine.
+func (s *Session) stopPeriodicAggregation() {
+	if s.periodicTicker != nil {
+		s.periodicTicker.Stop()
+	}
+	close(s.stopPeriodicChan)
 }
 
 // Start begins recording a new debugging session and persists it to disk.
@@ -67,6 +121,9 @@ func (s *Session) End() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	// Stop periodic aggregation
+	s.stopPeriodicAggregation()
+
 	// Flush any pending cursor events
 	if pendingEvent := s.cursorFilter.FlushPending(); pendingEvent != nil {
 		s.Session.Events = append(s.Session.Events, *pendingEvent)
@@ -89,7 +146,15 @@ func (s *Session) End() error {
 	delete(activeSessions, s.ID)
 	activeSessionsMu.Unlock()
 
-	return s.save()
+	// Save raw JSON
+	if err := s.save(); err != nil {
+		return err
+	}
+
+	// Generate final SESSION_SUMMARY.md
+	s.regenerateSummary()
+
+	return nil
 }
 
 // AddAnnotation adds a user-provided note to the session timeline.
@@ -217,12 +282,13 @@ func (s *Session) addEvent(event models.Event) error {
 	return s.save()
 }
 
-// save persists the session state to disk as JSON.
+// save persists the session state to disk as JSON (The Truth).
 func (s *Session) save() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	sessionPath := filepath.Join(s.SavePath, s.ID+".json")
+	// Save as {session_id}_raw.json to distinguish from exported versions
+	sessionPath := filepath.Join(s.SavePath, s.ID+"_raw.json")
 	data, err := json.MarshalIndent(s.Session, "", "  ")
 	if err != nil {
 		return err
@@ -240,11 +306,16 @@ func LoadSession(sessionID string, savePath string, filterConfig *filter.FilterC
 	}
 	activeSessionsMu.RUnlock()
 
-	// Try to load from file
-	sessionPath := filepath.Join(savePath, sessionID+".json")
+	// Try to load from file (try both _raw.json and .json for backwards compatibility)
+	sessionPath := filepath.Join(savePath, sessionID+"_raw.json")
 	data, err := os.ReadFile(sessionPath)
 	if err != nil {
-		return nil, err
+		// Try old naming scheme
+		sessionPath = filepath.Join(savePath, sessionID+".json")
+		data, err = os.ReadFile(sessionPath)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var modelSession models.Session
@@ -253,14 +324,19 @@ func LoadSession(sessionID string, savePath string, filterConfig *filter.FilterC
 	}
 
 	session := &Session{
-		Session:      &modelSession,
-		cursorFilter: filter.NewCursorFilter(filterConfig),
+		Session:          &modelSession,
+		cursorFilter:     filter.NewCursorFilter(filterConfig),
+		aggregatorConfig: aggregator.DefaultConfig(),
+		stopPeriodicChan: make(chan struct{}),
 	}
 
 	if session.Active {
 		activeSessionsMu.Lock()
 		activeSessions[sessionID] = session
 		activeSessionsMu.Unlock()
+
+		// Restart periodic aggregation for active sessions
+		session.startPeriodicAggregation(5 * time.Minute)
 	}
 
 	return session, nil
@@ -274,9 +350,24 @@ func ListSessions(savePath string) ([]string, error) {
 	}
 
 	var sessions []string
+	seen := make(map[string]bool)
+
 	for _, file := range files {
-		if filepath.Ext(file.Name()) == ".json" {
-			sessions = append(sessions, file.Name()[:len(file.Name())-5]) // Remove .json extension
+		name := file.Name()
+
+		// Handle both _raw.json and .json extensions
+		if strings.HasSuffix(name, "_raw.json") {
+			sessionID := strings.TrimSuffix(name, "_raw.json")
+			if !seen[sessionID] {
+				sessions = append(sessions, sessionID)
+				seen[sessionID] = true
+			}
+		} else if strings.HasSuffix(name, ".json") && !strings.HasSuffix(name, "_export.json") {
+			sessionID := strings.TrimSuffix(name, ".json")
+			if !seen[sessionID] {
+				sessions = append(sessions, sessionID)
+				seen[sessionID] = true
+			}
 		}
 	}
 
@@ -285,10 +376,16 @@ func ListSessions(savePath string) ([]string, error) {
 
 // ResumeSession loads a previously saved session and marks it as active again.
 func ResumeSession(sessionName, savePath string, filterConfig *filter.FilterConfig) (*Session, error) {
-	sessionPath := filepath.Join(savePath, sessionName+".json")
+	// Try to load from file (try both _raw.json and .json for backwards compatibility)
+	sessionPath := filepath.Join(savePath, sessionName+"_raw.json")
 	data, err := os.ReadFile(sessionPath)
 	if err != nil {
-		return nil, err
+		// Try old naming scheme
+		sessionPath = filepath.Join(savePath, sessionName+".json")
+		data, err = os.ReadFile(sessionPath)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var modelSession models.Session
@@ -297,8 +394,10 @@ func ResumeSession(sessionName, savePath string, filterConfig *filter.FilterConf
 	}
 
 	session := &Session{
-		Session:      &modelSession,
-		cursorFilter: filter.NewCursorFilter(filterConfig),
+		Session:          &modelSession,
+		cursorFilter:     filter.NewCursorFilter(filterConfig),
+		aggregatorConfig: aggregator.DefaultConfig(),
+		stopPeriodicChan: make(chan struct{}),
 	}
 
 	session.Active = true
@@ -306,6 +405,9 @@ func ResumeSession(sessionName, savePath string, filterConfig *filter.FilterConf
 	activeSessionsMu.Lock()
 	activeSessions[session.ID] = session
 	activeSessionsMu.Unlock()
+
+	// Start periodic aggregation
+	session.startPeriodicAggregation(5 * time.Minute)
 
 	// Record resume event
 	session.addEvent(models.Event{
