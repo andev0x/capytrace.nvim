@@ -14,7 +14,6 @@ import (
 // remains idle or when followed by significant events like text changes.
 type CursorFilter struct {
 	mu               sync.Mutex
-	lastCursorEvent  *models.Event
 	lastEventTime    time.Time
 	pendingEvent     *models.Event
 	debounceTimer    *time.Timer

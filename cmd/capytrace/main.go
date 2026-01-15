@@ -113,7 +113,10 @@ func handleEnd() {
 	case "sqlite":
 		home, _ := os.UserHomeDir()
 		dataDir := filepath.Join(home, ".local", "share", "capytrace")
-		os.MkdirAll(dataDir, 0755)
+		if err := os.MkdirAll(dataDir, 0755); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to create data directory: %v\n", err)
+			os.Exit(1)
+		}
 		exp = exporter.NewSQLiteExporter(dataDir)
 	default:
 		exp = &exporter.MarkdownExporter{}
