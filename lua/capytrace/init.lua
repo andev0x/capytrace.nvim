@@ -443,15 +443,15 @@ function M.record_lsp_diagnostic()
 				vim.lsp.protocol.DiagnosticSeverity[diagnostic.severity],
 			})
 		else
-		exec_go_command("record-lsp-diagnostic", {
-			session_id,
-			config.get().save_path,
-			filename,
-			tostring(cursor_pos[1]),
-			tostring(cursor_pos[2]),
-			diagnostic.message,
-			vim.lsp.protocol.DiagnosticSeverity[diagnostic.severity],
-		})
+			exec_go_command("record-lsp-diagnostic", {
+				session_id,
+				config.get().save_path,
+				filename,
+				tostring(cursor_pos[1]),
+				tostring(cursor_pos[2]),
+				diagnostic.message,
+				vim.lsp.protocol.DiagnosticSeverity[diagnostic.severity],
+			})
 		end
 	end
 end
@@ -649,7 +649,10 @@ function M.setup(opts)
 			require("telescope").extensions.capytrace.sessions()
 		end)
 		if not ok then
-			vim.notify("Load Telescope extension with: require('telescope').load_extension('capytrace')", vim.log.levels.WARN)
+			vim.notify(
+				"Load Telescope extension with: require('telescope').load_extension('capytrace')",
+				vim.log.levels.WARN
+			)
 		end
 	end, { desc = "Telescope search sessions by filename/project" })
 
@@ -658,7 +661,10 @@ function M.setup(opts)
 			require("telescope").extensions.capytrace.notes()
 		end)
 		if not ok then
-			vim.notify("Load Telescope extension with: require('telescope').load_extension('capytrace')", vim.log.levels.WARN)
+			vim.notify(
+				"Load Telescope extension with: require('telescope').load_extension('capytrace')",
+				vim.log.levels.WARN
+			)
 		end
 	end, { desc = "Telescope search session annotations" })
 end
