@@ -75,7 +75,7 @@
 ## Requirements
 
 - **Neovim**: v0.9.0 or higher
-- **Go**: v1.18 or higher (required to build from source)
+- **Go**: v1.18 or higher (only required when building from source)
 - **Make**: For building (optional, see [Building from Source](#building-from-source))
 
 ---
@@ -89,11 +89,11 @@ Add the following to your lazy.nvim configuration:
 ```lua
 {
   "andev0x/capytrace.nvim",
-  build = "make build",  -- Builds the Go binary automatically
   config = function()
     require("capytrace").setup({
       output_format = "markdown",  -- or "json" or "sqlite"
       save_path = "~/capytrace_logs/",
+      auto_download_binary = true,  -- download release binary automatically
       filter_threshold = 500,      -- Idle detection threshold (ms)
       debounce_interval = 200,     -- Cursor debounce interval (ms)
     })
@@ -104,7 +104,7 @@ Add the following to your lazy.nvim configuration:
 ### With vim-plug
 
 ```vim
-Plug 'andev0x/capytrace.nvim', { 'do': 'make build' }
+Plug 'andev0x/capytrace.nvim'
 ```
 
 ### Manual Installation
@@ -115,7 +115,7 @@ Plug 'andev0x/capytrace.nvim', { 'do': 'make build' }
    cd capytrace.nvim
    ```
 
-2. Build the Go binary:
+2. (Optional) Build the Go binary:
    ```bash
    make build
    ```
@@ -185,6 +185,15 @@ require("capytrace").setup({
   -- Auto-save session when closing Neovim
   auto_save_on_exit = true,
 
+  -- Automatically open generated markdown report when session ends
+  open_report_on_end = true,
+
+  -- Auto-install backend binary from GitHub Releases
+  auto_download_binary = true,
+
+  -- Optional custom binary path (skip auto path detection)
+  -- binary_path = "~/bin/capytrace",
+
   -- Maximum cursor movement events per session (for memory efficiency)
   max_cursor_events = 100,
 
@@ -231,6 +240,9 @@ This approach reduces cursor events by ~90% while preserving meaningful context.
 
 " Resume a previous session
 :CapyTraceResume session_id
+
+" Search previous reports with Telescope (requires telescope.nvim)
+:CapyTraceSessions
 ```
 
 ### CLI Commands (Direct Usage)
@@ -246,7 +258,7 @@ This approach reduces cursor events by ~90% while preserving meaningful context.
 ./bin/capytrace annotate <session_id> <save_path> "note text"
 
 # Record events
-./bin/capytrace record-edit <session_id> <save_path> <filename> <line> <col> <line_count> <changed_tick>
+./bin/capytrace record-edit <session_id> <save_path> <filename> <line> <col> <line_count> <changed_tick> <line_text>
 ./bin/capytrace record-cursor <session_id> <save_path> <filename> <line> <col>
 ./bin/capytrace record-terminal <session_id> <save_path> "command"
 

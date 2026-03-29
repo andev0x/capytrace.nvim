@@ -262,3 +262,14 @@ func formatDuration(d time.Duration) string {
 	minutes := int(d.Minutes()) % 60
 	return fmt.Sprintf("%dh %dm", hours, minutes)
 }
+
+// formatEventType converts snake_case event types to Title Case for display.
+func formatEventType(eventType string) string {
+	words := strings.Split(eventType, "_")
+	for i, word := range words {
+		if len(word) > 0 {
+			words[i] = strings.ToUpper(word[:1]) + word[1:]
+		}
+	}
+	return strings.Join(words, " ")
+}

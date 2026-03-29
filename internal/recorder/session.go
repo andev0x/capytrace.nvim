@@ -173,7 +173,7 @@ func (s *Session) AddAnnotation(note string) error {
 }
 
 // RecordEdit records a file modification event with position and metadata.
-func (s *Session) RecordEdit(filename, line, col, lineCount, changedTick string) error {
+func (s *Session) RecordEdit(filename, line, col, lineCount, changedTick, lineText string) error {
 	lineNum, _ := strconv.Atoi(line)
 	colNum, _ := strconv.Atoi(col)
 	lineCountNum, _ := strconv.Atoi(lineCount)
@@ -188,6 +188,7 @@ func (s *Session) RecordEdit(filename, line, col, lineCount, changedTick string)
 			Column:      colNum,
 			LineCount:   lineCountNum,
 			ChangedTick: changedTickNum,
+			LineText:    lineText,
 		},
 	}
 

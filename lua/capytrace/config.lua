@@ -4,9 +4,13 @@ local M = {}
 local default_config = {
 	output_format = "markdown", -- or "json" or "sqlite"
 	save_path = vim.fn.expand("~/capytrace_logs/"),
+	binary_path = nil,
+	auto_download_binary = true,
+	github_repo = "andev0x/capytrace.nvim",
 	record_terminal = true,
 	record_git_diff = true,
 	auto_save_on_exit = true,
+	open_report_on_end = true,
 	max_cursor_events = 100, -- Limit cursor movement recordings
 
 	-- Smart Filter configuration (Anti-Spam Cursor Filter)
