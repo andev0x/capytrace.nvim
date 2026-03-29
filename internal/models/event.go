@@ -20,6 +20,7 @@ type EventData struct {
 	Column      int    `json:"column,omitempty"`
 	LineCount   int    `json:"line_count,omitempty"`
 	ChangedTick int    `json:"changed_tick,omitempty"`
+	LineText    string `json:"line_text,omitempty"`
 
 	// File open events
 	FileType string `json:"file_type,omitempty"`
