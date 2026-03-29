@@ -121,7 +121,6 @@ func (s *Session) Start() error {
 // End terminates the current session and performs final cleanup.
 func (s *Session) End() error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	// Stop periodic aggregation
 	s.stopPeriodicAggregation()
@@ -147,6 +146,7 @@ func (s *Session) End() error {
 	activeSessionsMu.Lock()
 	delete(activeSessions, s.ID)
 	activeSessionsMu.Unlock()
+	s.mu.Unlock()
 
 	// Save raw JSON
 	if err := s.save(); err != nil {
