@@ -6,62 +6,51 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   go:
-    name: Go Build & Test
+    name: Go Check
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go-version: ['1.23', '1.24']
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Go ${{ matrix.go-version }}
+      - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go-version }}
-      - name: Cache Go modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+          go-version-file: go.mod
+          cache: true
+      - name: Verify gofmt
+        run: |
+          unformatted=$(gofmt -l cmd internal)
+          if [ -n "$unformatted" ]; then
+            echo "These files are not gofmt-formatted:"
+            echo "$unformatted"
+            exit 1
+          fi
       - name: Build
-        run: make build
+        run: go build -trimpath -o ./bin/capytrace ./cmd/capytrace
       - name: Test
-        run: make test
-      - name: Format
-        run: make fmt
+        run: go test ./...
       - name: Upload Go binary
         uses: actions/upload-artifact@v4
         with:
-          name: capytrace-binary-go-${{ matrix.go-version }}-${{ github.run_number }}
+          name: capytrace-binary-${{ github.sha }}
           path: bin/capytrace
-        if: always()
 
   lua:
-    name: Lua Lint & (Optional) Test
+    name: Lua Format Check
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        neovim-version: [v0.8.0, v0.9.0, stable]
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Lua
-        uses: leafo/gh-actions-lua@v10
-        with:
-          luaVersion: '5.1'
-      - name: Set up Neovim ${{ matrix.neovim-version }}
-        uses: rhysd/action-setup-vim@v1
-        with:
-          neovim: true
-          version: ${{ matrix.neovim-version }}
       - name: Lint with stylua
         uses: JohnnyMorganz/stylua-action@v4
         with:
           version: latest
-          token: ${{ secrets.GITHUB_TOKEN }}
           args: --check lua plugin
-       
